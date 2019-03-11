@@ -1,5 +1,7 @@
+import argparse
 import arrow
 
+import caffe
 from eyewitness.image_id import ImageId
 from eyewitness.image_utils import ImageHandler, Image
 from bistiming import SimpleTimer
@@ -14,6 +16,14 @@ def get_face_detector():
 
 if __name__ == '__main__':
     model_name = 'Mtcnn'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu_id', type=int, default=0)
+    args = parser.parse_args()
+
+    if args.gpu_id >= 0:
+        caffe.set_device(args.gpu_id)
+        caffe.set_mode_gpu()
+
     with SimpleTimer("Loading model %s" % model_name):
         object_detector = get_face_detector()
     raw_image_path = 'demo/test_image.jpg'
