@@ -4,15 +4,18 @@ from eyewitness.image_id import ImageId
 from eyewitness.image_utils import ImageHandler, Image
 from bistiming import SimpleTimer
 
+from demo import MtcnnFaceDetector
 
-def get_face_detector(model):
-    pass
+
+def get_face_detector():
+    caffe_model_path = "./model"
+    return MtcnnFaceDetector(caffe_model_path)
 
 
 if __name__ == '__main__':
-    model_name = 'MobileNet'
+    model_name = 'Mtcnn'
     with SimpleTimer("Loading model %s" % model_name):
-        object_detector = get_face_detector(model_name)
+        object_detector = get_face_detector()
     raw_image_path = 'demo/test_image.jpg'
     image_id = ImageId(channel='demo', timestamp=arrow.now().timestamp, file_format='jpg')
     image_obj = Image(image_id, raw_image_path=raw_image_path)

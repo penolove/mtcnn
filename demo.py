@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from time import time
 
 import caffe
 import cv2
 import numpy as np
-from time import time
+from eyewitness.detection_utils import DetectionResult
+from eyewitness.config import BoundedBoxObject
+from eyewitness.object_detector import ObjectDetector
 
 
 def bbreg(boundingbox, reg):
@@ -407,15 +410,49 @@ def haveFace(img, facedetector):
     return containFace, boundingboxes
 
 
+class MtcnnFaceDetector(ObjectDetector):
+    def __init__(self, caffe_model_path):
+        # caffe.set_mode_cpu()
+        self.PNet = caffe.Net(
+            caffe_model_path+"/det1.prototxt", caffe_model_path+"/det1.caffemodel", caffe.TEST)
+        self.RNet = caffe.Net(
+            caffe_model_path+"/det2.prototxt", caffe_model_path+"/det2.caffemodel", caffe.TEST)
+        self.ONet = caffe.Net(
+            caffe_model_path+"/det3.prototxt", caffe_model_path+"/det3.caffemodel", caffe.TEST)
+        self.threshold = [0.6, 0.7, 0.7]
+        self.factor = 0.709
+        self.minsize = 20
+
+    def detect(self, image_obj):
+        detected_objects = []
+        boundingboxes, points = detect_face(
+            np.array(image_obj), self.minsize, self.PNet, self.RNet, self.ONet,
+            self.threshold, False, self.factor)
+
+        # boundingboxes shape n, 5
+        for idx in range(boundingboxes.shape[0]):
+            x1, y1, x2, y2, score = boundingboxes[idx]
+            detected_objects.append(BoundedBoxObject(x1, y1, x2, y2, 'face', score, ''))
+
+        image_dict = {
+            'image_id': image_obj.image_id,
+            'detected_objects': detected_objects,
+        }
+        detection_result = DetectionResult(image_dict)
+        return detection_result
+
+    @property
+    def valid_labels(self):
+        return set(['face'])
+
+
 def main():
     imglistfile = "imglist.txt"
     minsize = 20
 
     caffe_model_path = "./model"
-
     threshold = [0.6, 0.7, 0.7]
     factor = 0.709
-
     caffe.set_mode_cpu()
     PNet = caffe.Net(
         caffe_model_path+"/det1.prototxt", caffe_model_path+"/det1.caffemodel", caffe.TEST)
