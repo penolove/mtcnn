@@ -425,8 +425,9 @@ class MtcnnFaceDetector(ObjectDetector):
 
     def detect(self, image_obj):
         detected_objects = []
+        frame = np.array(image_obj.pil_image_obj)
         boundingboxes, points = detect_face(
-            np.array(image_obj), self.minsize, self.PNet, self.RNet, self.ONet,
+            frame, self.minsize, self.PNet, self.RNet, self.ONet,
             self.threshold, False, self.factor)
 
         # boundingboxes shape n, 5
